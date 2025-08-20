@@ -34,10 +34,11 @@ each new market date for each customer, or select only the unique market dates p
 (without purchase details) and number those visits. 
 HINT: One of these approaches uses ROW_NUMBER() and one uses DENSE_RANK(). */
 
+
 SELECT 
     customer_id,
     market_date,
-    ROW_NUMBER() OVER (
+    DENSE_RANK() OVER (
         PARTITION BY customer_id 
         ORDER BY market_date
     ) AS visit_number
@@ -230,9 +231,10 @@ VALUES (
 /* 1. Delete the older record for the whatever product you added. 
 
 HINT: If you don't specify a WHERE clause, you are going to have a bad time.*/
+
 DELETE FROM product_units
 WHERE product_name = 'Apple Pie'
-  AND product_id <> 101;
+  AND snapshot_timestamp = '2025-08-20 21:54:45';
 
 
 -- UPDATE
@@ -257,14 +259,17 @@ ADD current_quantity INT;
 
 UPDATE product_units
 SET current_quantity = (
-    SELECT COALESCE(vi1.quantity, 0)
-    FROM vendor_inventory vi1
-    WHERE vi1.product_id = product_units.product_id
-      AND vi1.vendor_id = (
-          SELECT MAX(vi2.vendor_id)
-          FROM vendor_inventory vi2
-          WHERE vi2.product_id = vi1.product_id
-      )
+    SELECT COALESCE(vi.quantity, 0)
+    FROM (
+        SELECT product_id, quantity,
+               ROW_NUMBER() OVER (
+                   PARTITION BY product_id
+                   ORDER BY market_date DESC
+               ) AS rn
+        FROM vendor_inventory
+    ) vi
+    WHERE vi.product_id = product_units.product_id
+      AND vi.rn = 1
 )
 WHERE product_id IN (
     SELECT product_id FROM vendor_inventory

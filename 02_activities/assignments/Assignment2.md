@@ -55,7 +55,9 @@ The store wants to keep customer addresses. Propose two architectures for the CU
 
 ```
 Your answer...
-```
+```The CUSTOMER_ADDRESS table can be designed in 2 ways: one for retaining changes and one for overwriting changes.
+Architecture that overwrites (Type 1 Slowly Changing Dimensions) will keep only current address for each customer. That way we keep our tables under control (they will not become lengthy).
+Architecture that retains changes (Type 2 lowly Changing Dimensions) will keep a history of all addresses that a customer has ever had. It will keep the historical data but table can become very large.
 
 ***
 
